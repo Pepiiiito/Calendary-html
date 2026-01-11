@@ -3,197 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contador Diario</title>
+    <title>Chatbot personal de flashcards</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        /* Estilos generales */
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: flex-start;
-            align-items: flex-start;
-            margin: 0;
-            background-color: #f0f0f0;
-            height: 100vh;
-            padding: 20px;
+        :root {
+            color-scheme: light;
+            --bg: #f5f6fb;
+            --card: #ffffff;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        * {
             box-sizing: border-box;
         }
 
-        .container {
-            width: 100%;
-            max-width: 900px;
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            padding: 32px 20px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+        }
+
+        header p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 24px auto 40px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--border);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+        }
+
+        .upload-area {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .counter-container {
-            width: 40%;
-            background-color: #ffffff;
-            padding: 20px;
+        .upload-area input,
+        .upload-area textarea {
+            width: 100%;
+            padding: 12px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
         }
 
-        .history-container {
-            width: 55%;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-left: 20px;
+        .upload-area textarea {
+            min-height: 180px;
+            resize: vertical;
         }
 
-        h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .counter {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            padding: 15px 30px;
-            background-color: #e7f5ff;
-            border: 2px solid #007bff;
-            border-radius: 10px;
-            color: #007bff;
-            font-weight: bold;
+        .button-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         button {
-            padding: 15px 25px;
-            font-size: 1.2rem;
-            color: white;
-            background-color: #007bff;
+            padding: 12px 18px;
             border: none;
             border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
             cursor: pointer;
-            width: 100%;
+            transition: background 0.2s ease;
+        }
+
+        button.secondary {
+            background: #e0e7ff;
+            color: var(--primary-dark);
         }
 
         button:hover {
-            background-color: #0056b3;
+            background: var(--primary-dark);
         }
 
-        .history p {
-            font-size: 1.2rem;
-            color: #333;
-            margin: 8px 0;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
+        button.secondary:hover {
+            background: #c7d2fe;
         }
 
-        .history p:last-child {
-            border-bottom: none;
+        .chat-window {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 430px;
         }
-       
-        @media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-        align-items: center;
-    }
 
-    .counter-container,
-    .history-container {
-        width: 90%;
-        margin: 10px 0;
-    }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 8px;
+        }
 
-    button {
-        font-size: 1rem;
-    }
-}
+        .message {
+            padding: 12px 16px;
+            border-radius: 14px;
+            max-width: 90%;
+            line-height: 1.4;
+        }
 
+        .message.user {
+            align-self: flex-end;
+            background: #dbeafe;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: #f3f4f6;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .flashcards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            min-height: 160px;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            padding: 16px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .flashcard-face.back {
+            transform: rotateY(180deg);
+            background: #f8fafc;
+        }
+
+        .flashcard small {
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-window {
+                height: auto;
+            }
+        }
     </style>
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
-    <title>Contador Diario</title>
     <script>
-        // Registrar el service worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js').then(() => {
-                console.log("Service Worker registrado.");
-            }).catch((error) => {
+            navigator.serviceWorker.register('/service-worker.js').catch((error) => {
                 console.error("Error registrando el Service Worker:", error);
             });
         }
     </script>
 </head>
-
-</head>
 <body>
+    <header>
+        <h1>Chatbot personal para crear flashcards</h1>
+        <p>Sube un documento, conversa con tu asistente y genera tarjetas de estudio en segundos.</p>
+    </header>
 
-    <div class="container">
-        <!-- Contenedor del contador -->
-        <div class="counter-container">
-            <h1>Contador Diari</h1>
-            <div class="counter" id="counter">0</div>
-            <button id="incrementButton">Incrementar</button>
-        </div>
+    <main>
+        <section class="panel">
+            <h2>Fuente de contenido</h2>
+            <div class="upload-area">
+                <label>
+                    Documento (.txt)
+                    <input type="file" id="fileInput" accept=".txt" />
+                </label>
+                <label>
+                    Texto manual
+                    <textarea id="textInput" placeholder="Pega aquí tu resumen, definiciones o apuntes..."></textarea>
+                </label>
+                <div class="button-row">
+                    <button id="generateButton">Generar flashcards</button>
+                    <button class="secondary" id="clearButton">Limpiar tarjetas</button>
+                </div>
+                <small>Consejo: usa líneas con formato “Pregunta: Respuesta” para crear tarjetas exactas.</small>
+            </div>
 
-        <!-- Contenedor del historial -->
-        <div class="history-container" id="history">
-            <h2>Historial de Clics</h2>
-            <!-- Aquí se mostrarán los clics por día -->
-        </div>
-    </div>
+            <div>
+                <h3>Flashcards</h3>
+                <div id="flashcards" class="flashcards"></div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Tu chatbot personal</h2>
+            <div class="chat-window">
+                <div class="messages" id="messages"></div>
+                <div class="chat-input">
+                    <input id="chatInput" type="text" placeholder="Escribe: Pregunta: ... Respuesta: ..." />
+                    <button id="sendButton">Enviar</button>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script>
-        // Función para obtener la fecha actual en formato YYYY-MM-DD
-        function getTodayDate() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = (today.getMonth() + 1).toString().padStart(2, '0');
-            const day = today.getDate().toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        const messages = document.getElementById('messages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const fileInput = document.getElementById('fileInput');
+        const textInput = document.getElementById('textInput');
+        const generateButton = document.getElementById('generateButton');
+        const clearButton = document.getElementById('clearButton');
+        const flashcardsContainer = document.getElementById('flashcards');
+
+        let flashcards = [];
+
+        const storedCards = localStorage.getItem('flashcards');
+        if (storedCards) {
+            flashcards = JSON.parse(storedCards);
         }
 
-        // Recupera el contador para el día actual
-        function getCounter() {
-            const today = getTodayDate();
-            const count = localStorage.getItem(today);
-            return count ? parseInt(count) : 0; // Si no existe, empieza desde 0
+        function saveFlashcards() {
+            localStorage.setItem('flashcards', JSON.stringify(flashcards));
         }
 
-        // Actualiza el contador en la pantalla
-        function updateCounter() {
-            const count = getCounter();
-            document.getElementById('counter').textContent = count;
-            showHistory(); // Muestra el historial de clics
+        function addMessage(text, type = 'bot') {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
         }
 
-        // Incrementa el contador para el día actual
-        function incrementCounter() {
-            const today = getTodayDate();
-            let count = getCounter();
-            count++;
-            localStorage.setItem(today, count); // Guarda el nuevo valor en localStorage
-            updateCounter(); // Actualiza el contador en la interfaz
-        }
-
-        // Muestra el historial de clics por día
-        function showHistory() {
-            const historyContainer = document.getElementById('history');
-            historyContainer.innerHTML = ''; // Limpiar historial antes de mostrarlo
-
-            // Recorre todos los items del localStorage
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i); // Fecha (clave)
-                const value = localStorage.getItem(key); // Contador de clics
-
-                const historyItem = document.createElement('p');
-                historyItem.textContent = `${key}: ${value} clic(s)`;
-                historyContainer.appendChild(historyItem);
+        function renderFlashcards() {
+            flashcardsContainer.innerHTML = '';
+            if (flashcards.length === 0) {
+                flashcardsContainer.innerHTML = '<p>No hay tarjetas todavía. Genera algunas para empezar.</p>';
+                return;
             }
+
+            flashcards.forEach((card, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flashcard';
+                wrapper.innerHTML = `
+                    <div class="flashcard-inner">
+                        <div class="flashcard-face front">
+                            <small>Pregunta</small>
+                            <strong>${card.front}</strong>
+                        </div>
+                        <div class="flashcard-face back">
+                            <small>Respuesta</small>
+                            <span>${card.back}</span>
+                        </div>
+                    </div>
+                `;
+                wrapper.addEventListener('click', () => {
+                    wrapper.classList.toggle('flipped');
+                });
+                flashcardsContainer.appendChild(wrapper);
+            });
         }
 
-        // Configuración inicial
-        document.getElementById('incrementButton').addEventListener('click', incrementCounter);
-        updateCounter(); // Muestra el contador y el historial al cargar la página
-    </script>
+        function parseLineToCard(line) {
+            const separators = [':', ' - ', ' – ', ' — '];
+            for (const separator of separators) {
+                if (line.includes(separator)) {
+                    const parts = line.split(separator);
+                    if (parts.length >= 2) {
+                        return {
+                            front: parts[0].trim(),
+                            back: parts.slice(1).join(separator).trim(),
+                        };
+                    }
+                }
+            }
+            return null;
+        }
 
+        function generateFlashcardsFromText(text) {
+            const cards = [];
+            const lines = text
+                .split(/\n+/)
+                .map((line) => line.trim())
+                .filter(Boolean);
+
+            lines.forEach((line) => {
+                const card = parseLineToCard(line);
+                if (card && card.front && card.back) {
+                    cards.push(card);
+                }
+            });
+
+            if (cards.length === 0 && text.trim()) {
+                const sentences = text
+                    .replace(/\s+/g, ' ')
+                    .split(/(?<=[.!?])\s+/)
+                    .map((sentence) => sentence.trim())
+                    .filter(Boolean);
+
+                for (let i = 0; i < sentences.length; i += 2) {
+                    const front = sentences[i];
+                    const back = sentences[i + 1];
+                    if (front && back) {
+                        cards.push({ front, back });
+                    }
+                }
+
+                if (cards.length === 0 && sentences.length) {
+                    cards.push({
+                        front: 'Resumen rápido',
+                        back: sentences.slice(0, 3).join(' '),
+                    });
+                }
+            }
+
+            return cards;
+        }
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                textInput.value = reader.result;
+                addMessage('Documento cargado. ¿Quieres que genere flashcards?', 'bot');
+            };
+            reader.readAsText(file);
+        });
+
+        generateButton.addEventListener('click', () => {
+            const text = textInput.value;
+            const newCards = generateFlashcardsFromText(text);
+            if (newCards.length === 0) {
+                addMessage('No pude crear tarjetas. Intenta usar “Pregunta: Respuesta” en cada línea.', 'bot');
+                return;
+            }
+            flashcards = [...newCards, ...flashcards];
+            saveFlashcards();
+            renderFlashcards();
+            addMessage(`Listo. Agregué ${newCards.length} flashcards a tu colección.`, 'bot');
+        });
+
+        clearButton.addEventListener('click', () => {
+            flashcards = [];
+            saveFlashcards();
+            renderFlashcards();
+            addMessage('Tu colección está vacía. Puedes subir otro documento.', 'bot');
+        });
+
+        sendButton.addEventListener('click', () => {
+            const text = chatInput.value.trim();
+            if (!text) {
+                return;
+            }
+            addMessage(text, 'user');
+            chatInput.value = '';
+
+            const match = /pregunta\s*:\s*(.+)\s+respuesta\s*:\s*(.+)/i.exec(text);
+            if (match) {
+                const card = { front: match[1].trim(), back: match[2].trim() };
+                flashcards.unshift(card);
+                saveFlashcards();
+                renderFlashcards();
+                addMessage('¡Tarjeta creada! Haz clic en ella para ver la respuesta.', 'bot');
+                return;
+            }
+
+            addMessage('Puedo crear flashcards si escribes: “Pregunta: ... Respuesta: ...”. También puedo generar tarjetas desde tu documento.', 'bot');
+        });
+
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        addMessage('Hola, soy tu asistente personal. Sube un documento o pega tus apuntes para empezar.');
+        renderFlashcards();
+    </script>
 </body>
 </html>
